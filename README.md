@@ -1,7 +1,15 @@
 # SSR-Gate
 根据ssr订阅链接自动连接可用的服务器
 
----
+---  
+
+## Depend  
+
+Python  
+
+```
+sudo apt install python3
+```
 
 ## Usage
 
