@@ -14,6 +14,8 @@ sudo apt install python3
 ## Usage
 
 ```shell script
+git clone https://github.com/bieberg0n/SSR-Gate.git
+cd SSR-Gate/
 wget https://github.com/bieberg0n/SSR-Gate/releases/download/0.0.1/SSR-Gate
 
 ./SSR-Gate -h
