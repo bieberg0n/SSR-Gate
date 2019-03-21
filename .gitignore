@@ -12,6 +12,6 @@
 *.out
 
 __pycache__
-current_config.txt
+current_config.json
 SSR-Gate
 .idea/

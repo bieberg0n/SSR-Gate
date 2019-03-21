@@ -145,11 +145,17 @@ func bestWay(cfgs []*ssrConfig) (*ssrConfig) {
 	return ttlHostMap[minTTL]
 }
 
-func goodWays(cfgs map[string]*ssrConfig) ([]*ssrConfig) {
+func goodWays(cfgs map[string]*ssrConfig, goodKeyWord string, badKeyWord string) ([]*ssrConfig) {
 	var goodCfgs []*ssrConfig
 	for _, cfg := range cfgs {
+		if (badKeyWord != "" && strings.Contains(cfg.Remarks, badKeyWord)) ||
+			(goodKeyWord != "" && !strings.Contains(cfg.Remarks, goodKeyWord)) {
+			logs(cfg.Host, cfg.Remarks, "BAN")
+			continue
+		}
+
 		cfg.ping()
-		logs(cfg.Host, "ttl:", cfg.Ttl)
+		logs(cfg.Host, cfg.Remarks, "ttl:", cfg.Ttl)
 		if cfg.Ttl > 0 {
 			goodCfgs = append(goodCfgs, cfg)
 		}
@@ -157,11 +163,11 @@ func goodWays(cfgs map[string]*ssrConfig) ([]*ssrConfig) {
 	return goodCfgs
 }
 
-func goodWayFromUrl (url string) ([]*ssrConfig, error) {
+func goodWayFromUrl (url string, goodKeyWord string, badKeyWord string) ([]*ssrConfig, error) {
 	cfgs, err := cfgsFromUrl(url)
 	if err != nil {
 		return nil, err
 	}
 
-	return goodWays(cfgs), nil
+	return goodWays(cfgs, goodKeyWord, badKeyWord), nil
 }
