@@ -1,4 +1,4 @@
-// +build !linux
+// +build linux
 
 package main
 
@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"os/exec"
 	"strconv"
+	"syscall"
 )
 
 type SSRClient struct {
@@ -14,6 +15,7 @@ type SSRClient struct {
 
 func (c *SSRClient) Start(cfg *ssrConfig, listenPort int) {
 	cmd := exec.Command("python3", "shadowsocksr/shadowsocks/local.py", "-s", cfg.Host, "-p", strconv.Itoa(cfg.Port), "-k", cfg.Password, "-m", cfg.Method, "-O", cfg.Protocol, "-o", cfg.Obfs, "-G", cfg.ProtoParam, "-g", cfg.ObfsParam, "-l", strconv.Itoa(listenPort), "-v")
+	cmd.SysProcAttr = &syscall.SysProcAttr{Pdeathsig: syscall.SIGTERM}
 	c.cmd = cmd
 
 	stdout, err := cmd.StderrPipe()

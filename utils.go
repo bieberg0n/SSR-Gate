@@ -9,8 +9,12 @@ import (
 	"strings"
 )
 
-func logs(args... interface{}) {
+func info(args... interface{}) {
 	fmt.Println(args...)
+}
+
+func logs(args... interface{}) {
+	info(args...)
 }
 
 func logb(arg interface{}) {

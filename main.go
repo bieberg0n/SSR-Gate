@@ -23,17 +23,13 @@ func newSSRGateServer(ssrUrl string, port int, goodKeyWord string, badKeyWord st
 	serv.configChan = make(chan *ssrConfig)
 	serv.goodKeyWord = goodKeyWord
 	serv.badKeyWord = badKeyWord
-	go runGost(serv.configChan, port)
+	go runSSR(serv.configChan, port)
 
 	return serv
 }
 
 func (s *SSRGateServer) update() {
-	cfgs, err := goodWayFromUrl(s.url, s.goodKeyWord, s.badKeyWord)
-	if err != nil {
-		logs(err)
-		return
-	}
+	cfgs := goodWayFromUrl(s.url, s.goodKeyWord, s.badKeyWord)
 
 	s.config = bestWay(cfgs)
 	s.configChan <- s.config

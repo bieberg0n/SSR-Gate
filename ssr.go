@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ssrConfig struct {
@@ -163,11 +164,16 @@ func goodWays(cfgs map[string]*ssrConfig, goodKeyWord string, badKeyWord string)
 	return goodCfgs
 }
 
-func goodWayFromUrl (url string, goodKeyWord string, badKeyWord string) ([]*ssrConfig, error) {
-	cfgs, err := cfgsFromUrl(url)
-	if err != nil {
-		return nil, err
+func goodWayFromUrl (url string, goodKeyWord string, badKeyWord string) []*ssrConfig {
+	info("http get ssr config...")
+	for {
+		cfgs, err := cfgsFromUrl(url)
+		if err != nil {
+			info("http get ssr config error:", err)
+			time.Sleep(5 * time.Second)
+		} else {
+			return goodWays(cfgs, goodKeyWord, badKeyWord)
+		}
 	}
 
-	return goodWays(cfgs, goodKeyWord, badKeyWord), nil
 }
