@@ -146,11 +146,11 @@ func bestWay(cfgs []*ssrConfig) (*ssrConfig) {
 	return ttlHostMap[minTTL]
 }
 
-func goodWays(cfgs map[string]*ssrConfig, goodKeyWord string, badKeyWord string) ([]*ssrConfig) {
+func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []string) ([]*ssrConfig) {
 	var goodCfgs []*ssrConfig
 	for _, cfg := range cfgs {
-		if (badKeyWord != "" && strings.Contains(cfg.Remarks, badKeyWord)) ||
-			(goodKeyWord != "" && !strings.Contains(cfg.Remarks, goodKeyWord)) {
+		if (len(badKeyWords) != 0 && anyStrsInStr(cfg.Remarks, badKeyWords)) ||
+			(len(goodKeyWords) != 0 && !anyStrsInStr(cfg.Remarks, goodKeyWords)) {
 			logs(cfg.Host, cfg.Remarks, "BAN")
 			continue
 		}
@@ -164,7 +164,7 @@ func goodWays(cfgs map[string]*ssrConfig, goodKeyWord string, badKeyWord string)
 	return goodCfgs
 }
 
-func goodWayFromUrl (url string, goodKeyWord string, badKeyWord string) []*ssrConfig {
+func goodWayFromUrl (url string, goodKeyWords []string, badKeyWords []string) []*ssrConfig {
 	info("http get ssr config...")
 	for {
 		cfgs, err := cfgsFromUrl(url)
@@ -172,7 +172,7 @@ func goodWayFromUrl (url string, goodKeyWord string, badKeyWord string) []*ssrCo
 			info("http get ssr config error:", err)
 			time.Sleep(5 * time.Second)
 		} else {
-			return goodWays(cfgs, goodKeyWord, badKeyWord)
+			return goodWays(cfgs, goodKeyWords, badKeyWords)
 		}
 	}
 

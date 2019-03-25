@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"io/ioutil"
+	"strings"
 	"time"
 )
 
@@ -13,23 +14,23 @@ type SSRGateServer struct {
 	url string
 	config *ssrConfig
 	configChan chan *ssrConfig
-	goodKeyWord string
-	badKeyWord string
+	goodKeyWords []string
+	badKeyWords []string
 }
 
-func newSSRGateServer(ssrUrl string, port int, goodKeyWord string, badKeyWord string) *SSRGateServer {
+func newSSRGateServer(ssrUrl string, port int, goodKeyWords []string, badKeyWords []string) *SSRGateServer {
 	serv := new(SSRGateServer)
 	serv.url = ssrUrl
 	serv.configChan = make(chan *ssrConfig)
-	serv.goodKeyWord = goodKeyWord
-	serv.badKeyWord = badKeyWord
+	serv.goodKeyWords = goodKeyWords
+	serv.badKeyWords = badKeyWords
 	go runSSR(serv.configChan, port)
 
 	return serv
 }
 
 func (s *SSRGateServer) update() {
-	cfgs := goodWayFromUrl(s.url, s.goodKeyWord, s.badKeyWord)
+	cfgs := goodWayFromUrl(s.url, s.goodKeyWords, s.badKeyWords)
 
 	s.config = bestWay(cfgs)
 	s.configChan <- s.config
@@ -80,7 +81,9 @@ func main() {
 	if *h || *u == "" {
 		flag.Usage()
 	} else {
-		serv := newSSRGateServer(*u, *l, *k, *b)
+		goodKeyWords := strings.Split(*k, " ")
+		badKeyWords := strings.Split(*b, " ")
+		serv := newSSRGateServer(*u, *l, goodKeyWords, badKeyWords)
 		serv.Run()
 	}
 }

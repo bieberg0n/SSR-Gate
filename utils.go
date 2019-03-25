@@ -109,3 +109,12 @@ func b64decode(in string) (string, error) {
 
 	return string(decodeBytes), nil
 }
+
+func anyStrsInStr(str string, strs []string) bool {
+	for _, s := range strs {
+		if strings.Contains(str, s) {
+			return true
+		}
+	}
+	return false
+}
