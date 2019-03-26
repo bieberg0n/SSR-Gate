@@ -30,7 +30,7 @@ func newSSRGateServer(ssrUrl string, port int, goodKeyWords []string, badKeyWord
 }
 
 func (s *SSRGateServer) update() {
-	cfgs := goodWayFromUrl(s.url, s.goodKeyWords, s.badKeyWords)
+	cfgs := goodWaysFromUrl(s.url, s.goodKeyWords, s.badKeyWords)
 
 	s.config = bestWay(cfgs)
 	s.configChan <- s.config

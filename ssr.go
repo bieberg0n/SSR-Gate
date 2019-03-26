@@ -164,16 +164,30 @@ func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []s
 	return goodCfgs
 }
 
-func goodWayFromUrl (url string, goodKeyWords []string, badKeyWords []string) []*ssrConfig {
+func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []*ssrConfig {
 	info("http get ssr config...")
+
+	var (
+		cfgMap map[string]*ssrConfig
+		err    error
+	)
 	for {
-		cfgs, err := cfgsFromUrl(url)
+		cfgMap, err = cfgsFromUrl(url)
 		if err != nil {
 			info("http get ssr config error:", err)
 			time.Sleep(5 * time.Second)
 		} else {
-			return goodWays(cfgs, goodKeyWords, badKeyWords)
+			break
 		}
 	}
 
+	for {
+		cfgs := goodWays(cfgMap, goodKeyWords, badKeyWords)
+		if len(cfgs) == 0 {
+			info("ssr configs all bad. again...")
+			time.Sleep(5 * time.Second)
+		} else {
+			return cfgs
+		}
+	}
 }
