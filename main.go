@@ -16,6 +16,7 @@ type SSRGateServer struct {
 	configChan chan *ssrConfig
 	goodKeyWords []string
 	badKeyWords []string
+	port int
 }
 
 func newSSRGateServer(ssrUrl string, port int, goodKeyWords []string, badKeyWords []string) *SSRGateServer {
@@ -24,6 +25,7 @@ func newSSRGateServer(ssrUrl string, port int, goodKeyWords []string, badKeyWord
 	serv.configChan = make(chan *ssrConfig)
 	serv.goodKeyWords = goodKeyWords
 	serv.badKeyWords = badKeyWords
+	serv.port = port
 	go runSSR(serv.configChan, port)
 
 	return serv
@@ -40,10 +42,17 @@ func (s *SSRGateServer) update() {
 }
 
 func (s *SSRGateServer) check() {
-	logs("check...")
+	log("check...")
 	s.config.ping()
-	logs(s.config.Host, s.config.Port, s.config.Ttl)
+	log(s.config.Host, s.config.Port, s.config.Ttl)
 	if s.config.Ttl <= 0 {
+		s.update()
+
+	} else if HttpPing(s.port) {
+		log("http ping: ok")
+
+	} else {
+		log("http ping: fail")
 		s.update()
 	}
 }
@@ -56,9 +65,10 @@ func (s *SSRGateServer) Run() {
 		check(err)
 
 		s.config = cfg
-		logs("Read config from file:")
+		log("Read config from file:")
 		logb(s.config)
 		s.configChan <- s.config
+		time.Sleep(time.Second)
 		s.check()
 	} else {
 		s.update()

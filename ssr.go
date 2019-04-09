@@ -103,7 +103,7 @@ func readSSR (data string) (map[string]*ssrConfig, error) {
 	for _, ssr := range ssrs {
 		cfg, err := parseSSRUrl(ssr)
 		if err != nil {
-			logs(err, ":", ssr)
+			log(err, ":", ssr)
 			continue
 		}
 		cfgs[cfg.Host] = cfg
@@ -141,7 +141,7 @@ func bestWay(cfgs []*ssrConfig) (*ssrConfig) {
 	}
 	minTTL := minInt(ttls)
 	best := ttlHostMap[minTTL]
-	logs("best addr:", best.Remarks, best.Host, best.Port, minTTL)
+	log("best addr:", best.Remarks, best.Host, best.Port, minTTL)
 
 	return ttlHostMap[minTTL]
 }
@@ -151,12 +151,12 @@ func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []s
 	for _, cfg := range cfgs {
 		if (len(badKeyWords) != 0 && anyStrsInStr(cfg.Remarks, badKeyWords)) ||
 			(len(goodKeyWords) != 0 && !anyStrsInStr(cfg.Remarks, goodKeyWords)) {
-			logs(cfg.Host, cfg.Remarks, "BAN")
+			log(cfg.Host, cfg.Remarks, "BAN")
 			continue
 		}
 
 		cfg.ping()
-		logs(cfg.Host, cfg.Remarks, "ttl:", cfg.Ttl)
+		log(cfg.Host, cfg.Remarks, "ttl:", cfg.Ttl)
 		if cfg.Ttl > 0 {
 			goodCfgs = append(goodCfgs, cfg)
 		}
@@ -165,7 +165,7 @@ func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []s
 }
 
 func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []*ssrConfig {
-	info("http get ssr config...")
+	log("http get ssr config...")
 
 	var (
 		cfgMap map[string]*ssrConfig
@@ -174,7 +174,7 @@ func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []
 	for {
 		cfgMap, err = cfgsFromUrl(url)
 		if err != nil {
-			info("http get ssr config error:", err)
+			log("http get ssr config error:", err)
 			time.Sleep(5 * time.Second)
 		} else {
 			break
@@ -184,7 +184,7 @@ func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []
 	for {
 		cfgs := goodWays(cfgMap, goodKeyWords, badKeyWords)
 		if len(cfgs) == 0 {
-			info("ssr configs all bad. again...")
+			log("ssr configs all bad. again...")
 			time.Sleep(5 * time.Second)
 		} else {
 			return cfgs

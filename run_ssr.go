@@ -4,6 +4,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"os/exec"
 	"strconv"
 )
@@ -33,9 +34,9 @@ func (c *SSRClient) Start(cfg *ssrConfig, listenPort int) {
 			}
 		}
 
-		logs(string(output))
+		fmt.Println(string(output))
 	}
-	logs("stop cmd")
+	log("stop cmd")
 }
 
 func (c *SSRClient) Stop () {
@@ -49,7 +50,7 @@ func runSSR(cfgChan chan *ssrConfig, listenPort int) {
 		client := new(SSRClient)
 		go client.Start(cfg, listenPort)
 		cfg = <-cfgChan
-		logs("stop...")
+		log("stop...")
 		client.Stop()
 	}
 }

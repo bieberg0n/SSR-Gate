@@ -5,25 +5,22 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	logs "log"
 	"os"
 	"strings"
 )
 
-func info(args... interface{}) {
-	fmt.Println(args...)
-}
-
-func logs(args... interface{}) {
-	info(args...)
+func log(args... interface{}) {
+	logs.Println(args...)
 }
 
 func logb(arg interface{}) {
 	data, err := json.MarshalIndent(arg, "", "  ")
 	if err != nil {
-		logs(err)
+		log(err)
 		return
 	}
-	logs(string(data))
+	log(string(data))
 }
 
 func logj(args... interface{}) {
