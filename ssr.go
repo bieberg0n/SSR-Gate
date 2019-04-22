@@ -150,7 +150,7 @@ func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []s
 	var goodCfgs []*ssrConfig
 	for _, cfg := range cfgs {
 		if (len(badKeyWords) != 0 && anyStrsInStr(cfg.Remarks, badKeyWords)) ||
-			(len(goodKeyWords) != 0 && !anyStrsInStr(cfg.Remarks, goodKeyWords)) {
+			(len(goodKeyWords) != 0 && !allStrsInStr(cfg.Remarks, goodKeyWords)) {
 			log(cfg.Host, cfg.Remarks, "BAN")
 			continue
 		}
