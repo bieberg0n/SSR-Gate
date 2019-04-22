@@ -93,6 +93,9 @@ func main() {
 	} else {
 		goodKeyWords := strings.Split(*k, " ")
 		badKeyWords := strings.Split(*b, " ")
+
+		log("good key words:", goodKeyWords)
+		log("bad key words:", badKeyWords)
 		serv := newSSRGateServer(*u, *l, goodKeyWords, badKeyWords)
 		serv.Run()
 	}

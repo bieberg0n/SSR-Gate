@@ -109,7 +109,7 @@ func b64decode(in string) (string, error) {
 
 func allStrsInStr(str string, strs []string) bool {
 	for _, s := range strs {
-		if !strings.Contains(str, s) {
+		if s != "" && !strings.Contains(str, s) {
 			return false
 		}
 	}
@@ -118,7 +118,7 @@ func allStrsInStr(str string, strs []string) bool {
 
 func anyStrsInStr(str string, strs []string) bool {
 	for _, s := range strs {
-		if strings.Contains(str, s) {
+		if s != "" && strings.Contains(str, s) {
 			return true
 		}
 	}
