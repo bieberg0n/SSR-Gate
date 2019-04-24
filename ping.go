@@ -1,9 +1,9 @@
 package main
 
 import (
-	"golang.org/x/net/proxy"
 	"net"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -39,20 +39,22 @@ func TcpPing(addr string) int {
 }
 
 func HttpPing(socksPort int) bool {
-	dialer, err := proxy.SOCKS5("tcp", "127.0.0.1:"+strconv.Itoa(socksPort), nil, &net.Dialer{Timeout: 3 * time.Second})
-	//KeepAlive: 10 * time.Second,
-	if err != nil {
-		log("get dialer error", dialer)
-		return false
+	socksProxy := "socks5://127.0.0.1:" + strconv.Itoa(socksPort)
+	proxy := func(_ *http.Request) (*url.URL, error) {
+		return url.Parse(socksProxy)
 	}
-	httpTransport := &http.Transport{Dial: dialer.Dial}
-	httpClient := &http.Client{Transport: httpTransport}
+
+	httpTransport := &http.Transport{Proxy: proxy}
+	httpClient := &http.Client{
+		Transport: httpTransport,
+		Timeout: 3 * time.Second,
+	}
 	resp, err := httpClient.Get("https://www.google.com/")
 	if err != nil {
 		log("http get error:", err)
 		return false
-	} else {
-		defer resp.Body.Close()
-		return true
 	}
+
+	_ = resp.Body.Close()
+	return true
 }
