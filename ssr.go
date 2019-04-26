@@ -24,10 +24,6 @@ type ssrConfig struct {
 	Ttl        int
 }
 
-func (c *ssrConfig) ping () {
-	c.Ttl = TcpPing(c.Host + ":" + strconv.Itoa(c.Port))
-}
-
 func parseSSRUrl (url string) (*ssrConfig, error) {
 	url, err := b64decode(url[6:])
 	if err != nil {
@@ -132,6 +128,19 @@ func cfgsFromUrl (url string) (map[string]*ssrConfig, error) {
 	return readSSR(decode)
 }
 
+func (s *SSRGateServer) ping (c *ssrConfig) {
+	ttl := TcpPing(c.Host + ":" + strconv.Itoa(c.Port))
+	if ttl < 0 {
+		c.Ttl = ttl
+	}
+
+	if s.config.Host != c.Host {
+		s.configChan <- c
+		time.Sleep(1000 * time.Millisecond)
+	}
+	c.Ttl = HttpPing(s.port)
+}
+
 func bestWay(cfgs []*ssrConfig) (*ssrConfig) {
 	ttlHostMap := map[int]*ssrConfig{}
 	var ttls []int
@@ -146,7 +155,7 @@ func bestWay(cfgs []*ssrConfig) (*ssrConfig) {
 	return ttlHostMap[minTTL]
 }
 
-func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []string) ([]*ssrConfig) {
+func (s *SSRGateServer) goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []string) ([]*ssrConfig) {
 	var goodCfgs []*ssrConfig
 	for _, cfg := range cfgs {
 		if (len(badKeyWords) != 0 && anyStrsInStr(cfg.Remarks, badKeyWords)) ||
@@ -155,7 +164,7 @@ func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []s
 			continue
 		}
 
-		cfg.ping()
+		s.ping(cfg)
 		log(cfg.Host, cfg.Remarks, "ttl:", cfg.Ttl)
 		if cfg.Ttl > 0 {
 			goodCfgs = append(goodCfgs, cfg)
@@ -164,7 +173,7 @@ func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []s
 	return goodCfgs
 }
 
-func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []*ssrConfig {
+func (s *SSRGateServer) goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []*ssrConfig {
 	log("http get ssr config...")
 
 	var (
@@ -182,7 +191,7 @@ func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []
 	}
 
 	for {
-		cfgs := goodWays(cfgMap, goodKeyWords, badKeyWords)
+		cfgs := s.goodWays(cfgMap, goodKeyWords, badKeyWords)
 		if len(cfgs) == 0 {
 			log("ssr configs all bad. again...")
 			time.Sleep(5 * time.Second)
