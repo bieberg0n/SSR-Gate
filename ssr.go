@@ -132,13 +132,12 @@ func (s *SSRGateServer) ping (c *ssrConfig) {
 	ttl := TcpPing(c.Host + ":" + strconv.Itoa(c.Port))
 	if ttl < 0 {
 		c.Ttl = ttl
-	}
 
-	if s.config.Host != c.Host {
-		s.configChan <- c
-		time.Sleep(1000 * time.Millisecond)
+	} else if s.config.Host != c.Host {
+		s.testConfigChan <- c
+		time.Sleep(time.Second)
+		c.Ttl = HttpPing(s.port+1)
 	}
-	c.Ttl = HttpPing(s.port)
 }
 
 func bestWay(cfgs []*ssrConfig) (*ssrConfig) {

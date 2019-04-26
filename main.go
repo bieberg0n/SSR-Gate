@@ -14,6 +14,7 @@ type SSRGateServer struct {
 	url string
 	config *ssrConfig
 	configChan chan *ssrConfig
+	testConfigChan chan *ssrConfig
 	goodKeyWords []string
 	badKeyWords []string
 	port int
@@ -24,10 +25,12 @@ func newSSRGateServer(ssrUrl string, port int, goodKeyWords []string, badKeyWord
 	serv.url = ssrUrl
 	serv.config = new(ssrConfig)
 	serv.configChan = make(chan *ssrConfig)
+	serv.testConfigChan = make(chan *ssrConfig)
 	serv.goodKeyWords = goodKeyWords
 	serv.badKeyWords = badKeyWords
 	serv.port = port
 	go runSSR(serv.configChan, port)
+	go runSSR(serv.testConfigChan, port+1)
 
 	return serv
 }
@@ -63,6 +66,7 @@ func (s *SSRGateServer) Run() {
 		log("Read config from file:")
 		logb(s.config)
 		s.configChan <- s.config
+		s.testConfigChan <- s.config
 		time.Sleep(time.Second)
 		s.check()
 	} else {
