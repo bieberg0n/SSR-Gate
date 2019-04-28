@@ -11,32 +11,28 @@ import (
 const fn = "current_config.json"
 
 type SSRGateServer struct {
-	url string
-	config *ssrConfig
-	configChan chan *ssrConfig
-	testConfigChan chan *ssrConfig
+	url          string
+	config       *ssrConfig
+	configChan   chan *ssrConfig
 	goodKeyWords []string
-	badKeyWords []string
-	port int
+	badKeyWords  []string
+	port         int
 }
 
 func newSSRGateServer(ssrUrl string, port int, goodKeyWords []string, badKeyWords []string) *SSRGateServer {
 	serv := new(SSRGateServer)
 	serv.url = ssrUrl
-	serv.config = new(ssrConfig)
 	serv.configChan = make(chan *ssrConfig)
-	serv.testConfigChan = make(chan *ssrConfig)
 	serv.goodKeyWords = goodKeyWords
 	serv.badKeyWords = badKeyWords
 	serv.port = port
 	go runSSR(serv.configChan, port)
-	go runSSR(serv.testConfigChan, port+1)
 
 	return serv
 }
 
 func (s *SSRGateServer) update() {
-	cfgs := s.goodWaysFromUrl(s.url, s.goodKeyWords, s.badKeyWords)
+	cfgs := goodWaysFromUrl(s.url, s.goodKeyWords, s.badKeyWords)
 
 	s.config = bestWay(cfgs)
 	s.configChan <- s.config
@@ -47,10 +43,16 @@ func (s *SSRGateServer) update() {
 
 func (s *SSRGateServer) check() {
 	log("check...")
-	s.ping(s.config)
+	s.config.ping()
 	log(s.config.Host, s.config.Port, s.config.Ttl)
 	if s.config.Ttl <= 0 {
-		log("ping: fail")
+		s.update()
+
+	} else if HttpPing(s.port) {
+		log("http ping: ok")
+
+	} else {
+		log("http ping: fail")
 		s.update()
 	}
 }
@@ -66,7 +68,6 @@ func (s *SSRGateServer) Run() {
 		log("Read config from file:")
 		logb(s.config)
 		s.configChan <- s.config
-		s.testConfigChan <- s.config
 		time.Sleep(time.Second)
 		s.check()
 	} else {

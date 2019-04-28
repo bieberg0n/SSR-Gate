@@ -24,6 +24,10 @@ type ssrConfig struct {
 	Ttl        int
 }
 
+func (c *ssrConfig) ping () {
+	c.Ttl = TcpPing(c.Host + ":" + strconv.Itoa(c.Port))
+}
+
 func parseSSRUrl (url string) (*ssrConfig, error) {
 	url, err := b64decode(url[6:])
 	if err != nil {
@@ -128,18 +132,6 @@ func cfgsFromUrl (url string) (map[string]*ssrConfig, error) {
 	return readSSR(decode)
 }
 
-func (s *SSRGateServer) ping (c *ssrConfig) {
-	ttl := TcpPing(c.Host + ":" + strconv.Itoa(c.Port))
-	if ttl < 0 {
-		c.Ttl = ttl
-
-	} else if s.config.Host != c.Host {
-		s.testConfigChan <- c
-		time.Sleep(time.Second)
-		c.Ttl = HttpPing(s.port+1)
-	}
-}
-
 func bestWay(cfgs []*ssrConfig) (*ssrConfig) {
 	ttlHostMap := map[int]*ssrConfig{}
 	var ttls []int
@@ -154,7 +146,7 @@ func bestWay(cfgs []*ssrConfig) (*ssrConfig) {
 	return ttlHostMap[minTTL]
 }
 
-func (s *SSRGateServer) goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []string) ([]*ssrConfig) {
+func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []string) ([]*ssrConfig) {
 	var goodCfgs []*ssrConfig
 	for _, cfg := range cfgs {
 		if (len(badKeyWords) != 0 && anyStrsInStr(cfg.Remarks, badKeyWords)) ||
@@ -163,7 +155,7 @@ func (s *SSRGateServer) goodWays(cfgs map[string]*ssrConfig, goodKeyWords []stri
 			continue
 		}
 
-		s.ping(cfg)
+		cfg.ping()
 		log(cfg.Host, cfg.Remarks, "ttl:", cfg.Ttl)
 		if cfg.Ttl > 0 {
 			goodCfgs = append(goodCfgs, cfg)
@@ -172,7 +164,7 @@ func (s *SSRGateServer) goodWays(cfgs map[string]*ssrConfig, goodKeyWords []stri
 	return goodCfgs
 }
 
-func (s *SSRGateServer) goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []*ssrConfig {
+func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []*ssrConfig {
 	log("http get ssr config...")
 
 	var (
@@ -190,7 +182,7 @@ func (s *SSRGateServer) goodWaysFromUrl(url string, goodKeyWords []string, badKe
 	}
 
 	for {
-		cfgs := s.goodWays(cfgMap, goodKeyWords, badKeyWords)
+		cfgs := goodWays(cfgMap, goodKeyWords, badKeyWords)
 		if len(cfgs) == 0 {
 			log("ssr configs all bad. again...")
 			time.Sleep(5 * time.Second)
