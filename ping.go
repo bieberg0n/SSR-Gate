@@ -38,7 +38,7 @@ func TcpPing(addr string) int {
 	}
 }
 
-func HttpPing(socksPort int) bool {
+func httpPingOnce(socksPort int) bool {
 	socksProxy := "socks5://127.0.0.1:" + strconv.Itoa(socksPort)
 	proxy := func(_ *http.Request) (*url.URL, error) {
 		return url.Parse(socksProxy)
@@ -47,7 +47,7 @@ func HttpPing(socksPort int) bool {
 	httpTransport := &http.Transport{Proxy: proxy}
 	httpClient := &http.Client{
 		Transport: httpTransport,
-		Timeout: 3 * time.Second,
+		Timeout:   3 * time.Second,
 	}
 	resp, err := httpClient.Get("https://www.google.com/")
 	if err != nil {
@@ -57,4 +57,13 @@ func HttpPing(socksPort int) bool {
 
 	_ = resp.Body.Close()
 	return true
+}
+
+func HttpPing(socksPort int) bool {
+	for i := 0; i < 3; i++ {
+		if httpPingOnce(socksPort) {
+			return true
+		}
+	}
+	return false
 }

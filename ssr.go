@@ -132,22 +132,17 @@ func cfgsFromUrl (url string) (map[string]*ssrConfig, error) {
 	return readSSR(decode)
 }
 
-func bestWay(cfgs []*ssrConfig) (*ssrConfig) {
-	ttlHostMap := map[int]*ssrConfig{}
-	var ttls []int
-	for _, cfg := range cfgs {
-		ttlHostMap[cfg.Ttl] = cfg
-		ttls = append(ttls, cfg.Ttl)
-	}
-	minTTL := minInt(ttls)
-	best := ttlHostMap[minTTL]
-	log("best addr:", best.Remarks, best.Host, best.Port, minTTL)
-
-	return ttlHostMap[minTTL]
+func checkCfg(master chan<- *ssrConfig, cfg *ssrConfig) {
+	cfg.ping()
+	log(cfg.Host, cfg.Remarks, "ttl:", cfg.Ttl)
+	master <- cfg
 }
 
-func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []string) ([]*ssrConfig) {
+func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []string) []*ssrConfig {
 	var goodCfgs []*ssrConfig
+	self := make(chan *ssrConfig)
+	childNum := 0
+
 	for _, cfg := range cfgs {
 		if (len(badKeyWords) != 0 && anyStrsInStr(cfg.Remarks, badKeyWords)) ||
 			(len(goodKeyWords) != 0 && !allStrsInStr(cfg.Remarks, goodKeyWords)) {
@@ -155,8 +150,12 @@ func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []s
 			continue
 		}
 
-		cfg.ping()
-		log(cfg.Host, cfg.Remarks, "ttl:", cfg.Ttl)
+		go checkCfg(self, cfg)
+		childNum += 1
+	}
+
+	for i := 0; i < childNum; i++ {
+		cfg := <- self
 		if cfg.Ttl > 0 {
 			goodCfgs = append(goodCfgs, cfg)
 		}
@@ -171,6 +170,7 @@ func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []
 		cfgMap map[string]*ssrConfig
 		err    error
 	)
+
 	for {
 		cfgMap, err = cfgsFromUrl(url)
 		if err != nil {
@@ -191,3 +191,20 @@ func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []
 		}
 	}
 }
+
+func bestWay(url string, goodKeyWords []string, badKeyWords []string) *ssrConfig {
+	cfgs := goodWaysFromUrl(url, goodKeyWords, badKeyWords)
+
+	ttlHostMap := map[int]*ssrConfig{}
+	var ttls []int
+	for _, cfg := range cfgs {
+		ttlHostMap[cfg.Ttl] = cfg
+		ttls = append(ttls, cfg.Ttl)
+	}
+	minTTL := minInt(ttls)
+	best := ttlHostMap[minTTL]
+	log("best addr:", best.Remarks, best.Host, best.Port, minTTL)
+
+	return ttlHostMap[minTTL]
+}
+
