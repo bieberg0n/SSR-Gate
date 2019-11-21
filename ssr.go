@@ -24,7 +24,11 @@ type ssrConfig struct {
 	Ttl        int
 }
 
-func (c *ssrConfig) ping () {
+func (c *ssrConfig) httpPing() {
+	c.Ttl = runAndHttpPing(c)
+}
+
+func (c *ssrConfig) tcpPing() {
 	c.Ttl = TcpPing(c.Host + ":" + strconv.Itoa(c.Port))
 }
 
@@ -133,7 +137,12 @@ func cfgsFromUrl (url string) (map[string]*ssrConfig, error) {
 }
 
 func checkCfg(master chan<- *ssrConfig, cfg *ssrConfig) {
-	cfg.ping()
+	if checkMethod == "http" {
+		cfg.httpPing()
+	} else {
+		cfg.tcpPing()
+	}
+	//cfg.tcpPing()
 	log(cfg.Host, cfg.Remarks, "ttl:", cfg.Ttl)
 	master <- cfg
 }
@@ -144,21 +153,32 @@ func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []s
 	childNum := 0
 
 	for _, cfg := range cfgs {
+		log(cfg.Remarks)
+	}
+
+	for _, cfg := range cfgs {
 		if (len(badKeyWords) != 0 && anyStrsInStr(cfg.Remarks, badKeyWords)) ||
 			(len(goodKeyWords) != 0 && !allStrsInStr(cfg.Remarks, goodKeyWords)) {
 			log(cfg.Host, cfg.Remarks, "BAN")
 			continue
 		}
 
+		log("ways check", cfg.Remarks)
 		go checkCfg(self, cfg)
 		childNum += 1
+		log("continue")
 	}
 
 	for i := 0; i < childNum; i++ {
+	//for _, cfg := range cfgs {
 		cfg := <- self
 		if cfg.Ttl > 0 {
 			goodCfgs = append(goodCfgs, cfg)
 		}
+	}
+	log("good cfgs:")
+	for _, cfg := range goodCfgs {
+		log(cfg.Remarks)
 	}
 	return goodCfgs
 }

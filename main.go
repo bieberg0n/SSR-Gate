@@ -9,6 +9,7 @@ import (
 )
 
 const fn = "current_config.json"
+var checkMethod = "tcp"
 
 type SSRGateServer struct {
 	url          string
@@ -41,17 +42,21 @@ func (s *SSRGateServer) update() {
 
 func (s *SSRGateServer) check() {
 	log("check...")
-	s.config.ping()
-	log(s.config.Host, s.config.Port, s.config.Ttl)
+	s.config.tcpPing()
+	log(s.config.Host, s.config.Port, "tcp ttl:", s.config.Ttl)
 	if s.config.Ttl <= 0 {
 		s.update()
 
-	} else if HttpPing(s.port) {
-		log("http ping: ok")
-
 	} else {
-		log("http ping: fail")
-		s.update()
+		ttl := HttpPing(s.port)
+		log(s.config.Remarks, "http ttl:", ttl)
+		if ttl > 0 {
+			log("http ping: ok")
+
+		} else {
+			log("http ping: fail")
+			s.update()
+		}
 	}
 }
 
@@ -73,7 +78,7 @@ func (s *SSRGateServer) Run() {
 	}
 
 	for {
-		time.Sleep(time.Second * 10)
+		time.Sleep(time.Second * 20)
 		s.check()
 	}
 }
@@ -84,6 +89,7 @@ func main() {
 	l := flag.Int("l", 1080, "listen port")
 	k := flag.String("k", "", "remarks match keywords")
 	b := flag.String("b", "", "remarks match bad keywords")
+	c := flag.String("c", "tcp", "check method: [tcp|http]")
 
 	flag.Parse()
 	if *h || *u == "" {
@@ -95,6 +101,8 @@ func main() {
 		log("good key words:", goodKeyWords)
 		log("bad key words:", badKeyWords)
 		serv := newSSRGateServer(*u, *l, goodKeyWords, badKeyWords)
+
+		checkMethod = *c
 		serv.Run()
 	}
 }

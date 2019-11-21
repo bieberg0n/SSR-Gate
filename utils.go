@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	logs "log"
+	"math/rand"
 	"os"
 	"strings"
 )
@@ -123,4 +124,11 @@ func anyStrsInStr(str string, strs []string) bool {
 		}
 	}
 	return false
+}
+
+func RandInt64(min, max int64) int64 {
+	if min >= max || min==0 || max==0{
+		return max
+	}
+	return rand.Int63n(max-min)+min
 }

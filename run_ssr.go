@@ -52,5 +52,8 @@ func runSSR(cfgChan chan *ssrConfig, listenPort int) {
 		cfg = <-cfgChan
 		log("stop...")
 		client.Stop()
+		if cfg == nil {
+			return
+		}
 	}
 }
