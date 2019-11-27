@@ -43,18 +43,14 @@ func (s *SSRGateServer) update() {
 func (s *SSRGateServer) check() {
 	log("check...")
 	s.config.tcpPing()
-	log(s.config.Host, s.config.Port, "tcp ttl:", s.config.Ttl)
+	log(s.config.Remarks, s.config.Host, s.config.Port, "tcp ttl:", s.config.Ttl)
 	if s.config.Ttl <= 0 {
 		s.update()
 
 	} else {
 		ttl := HttpPing(s.port)
 		log(s.config.Remarks, "http ttl:", ttl)
-		if ttl > 0 {
-			log("http ping: ok")
-
-		} else {
-			log("http ping: fail")
+		if ttl < 0 {
 			s.update()
 		}
 	}
