@@ -9,10 +9,13 @@ import (
 )
 
 const fn = "current_config.json"
+
 var checkMethod = "tcp"
 
 type SSRGateServer struct {
 	url          string
+	configs      ssrConfigSlice
+	configIndex  int
 	config       *ssrConfig
 	configChan   chan *ssrConfig
 	goodKeyWords []string
@@ -33,7 +36,16 @@ func newSSRGateServer(ssrUrl string, port int, goodKeyWords []string, badKeyWord
 }
 
 func (s *SSRGateServer) update() {
-	s.config = bestWay(s.url, s.goodKeyWords, s.badKeyWords)
+	if len(s.configs) > 0 && s.configIndex + 1 < len(s.configs) {
+		s.configIndex += 1
+
+	} else {
+		s.configs = goodWays(s.url, s.goodKeyWords, s.badKeyWords)
+		s.configIndex = 0
+	}
+
+	//s.config = bestWay(s.url, s.goodKeyWords, s.badKeyWords)
+	s.config = s.configs[s.configIndex]
 	s.configChan <- s.config
 
 	j, _ := json.MarshalIndent(s.config, "", "  ")
@@ -41,7 +53,7 @@ func (s *SSRGateServer) update() {
 }
 
 func (s *SSRGateServer) check() {
-	log("check...")
+	log(s.config.Remarks, "check...")
 	s.config.tcpPing()
 	log(s.config.Remarks, s.config.Host, s.config.Port, "tcp ttl:", s.config.Ttl)
 	if s.config.Ttl <= 0 {

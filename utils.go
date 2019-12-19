@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	logs "log"
 	"math/rand"
@@ -16,12 +15,13 @@ func log(args... interface{}) {
 }
 
 func logb(arg interface{}) {
-	data, err := json.MarshalIndent(arg, "", "  ")
-	if err != nil {
-		log(err)
-		return
-	}
-	log(string(data))
+	//data, err := json.MarshalIndent(arg, "", "  ")
+	//if err != nil {
+	//	log(err)
+	//	return
+	//}
+	//log(string(data))
+	fmt.Printf("%+v\n", arg)
 }
 
 func logj(args... interface{}) {

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +31,20 @@ func (c *ssrConfig) httpPing() {
 
 func (c *ssrConfig) tcpPing() {
 	c.Ttl = TcpPing(c.Host + ":" + strconv.Itoa(c.Port))
+}
+
+type ssrConfigSlice []*ssrConfig
+
+func (s ssrConfigSlice) Len() int {
+	return len(s)
+}
+
+func (s ssrConfigSlice) Less(i, j int) bool {
+	return s[i].Ttl < s[j].Ttl
+}
+
+func (s ssrConfigSlice) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
 }
 
 func parseSSRUrl (url string) (*ssrConfig, error) {
@@ -143,11 +158,11 @@ func checkCfg(master chan<- *ssrConfig, cfg *ssrConfig) {
 		cfg.tcpPing()
 	}
 	//cfg.tcpPing()
-	log(cfg.Host, cfg.Remarks, "ttl:", cfg.Ttl)
+	log(cfg.Remarks, cfg.Host, "ttl:", cfg.Ttl)
 	master <- cfg
 }
 
-func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []string) []*ssrConfig {
+func goodWaysByCfgs(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []string) ssrConfigSlice {
 	var goodCfgs []*ssrConfig
 	self := make(chan *ssrConfig)
 	childNum := 0
@@ -163,10 +178,8 @@ func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []s
 			continue
 		}
 
-		log("ways check", cfg.Remarks)
 		go checkCfg(self, cfg)
 		childNum += 1
-		log("continue")
 	}
 
 	for i := 0; i < childNum; i++ {
@@ -176,14 +189,10 @@ func goodWays(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWords []s
 			goodCfgs = append(goodCfgs, cfg)
 		}
 	}
-	log("good cfgs:")
-	for _, cfg := range goodCfgs {
-		log(cfg.Remarks)
-	}
 	return goodCfgs
 }
 
-func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []*ssrConfig {
+func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) ssrConfigSlice {
 	log("http get ssr config...")
 
 	var (
@@ -202,7 +211,7 @@ func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) []
 	}
 
 	for {
-		cfgs := goodWays(cfgMap, goodKeyWords, badKeyWords)
+		cfgs := goodWaysByCfgs(cfgMap, goodKeyWords, badKeyWords)
 		if len(cfgs) == 0 {
 			log("ssr configs all bad. again...")
 			time.Sleep(5 * time.Second)
@@ -228,3 +237,15 @@ func bestWay(url string, goodKeyWords []string, badKeyWords []string) *ssrConfig
 	return ttlHostMap[minTTL]
 }
 
+func goodWays(url string, goodKeyWords []string, badKeyWords []string) ssrConfigSlice {
+	cfgs := goodWaysFromUrl(url, goodKeyWords, badKeyWords)
+
+	sort.Sort(cfgs)
+
+	log("good cfgs:")
+	for _, cfg := range cfgs {
+		log(cfg.Remarks, cfg.Ttl)
+	}
+
+	return cfgs
+}
