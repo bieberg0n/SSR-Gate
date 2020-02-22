@@ -50,6 +50,8 @@ func (s *SSRGateServer) update() {
 
 	j, _ := json.MarshalIndent(s.config, "", "  ")
 	_ = ioutil.WriteFile(fn, j, 0644)
+	time.Sleep(time.Second)
+	s.check()
 }
 
 func (s *SSRGateServer) check() {
