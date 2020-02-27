@@ -125,7 +125,7 @@ func readSSR (data string) (map[string]*ssrConfig, error) {
 			log(err, ":", ssr)
 			continue
 		}
-		cfgs[cfg.Host] = cfg
+		cfgs[cfg.Remarks] = cfg
 	}
 	return cfgs, nil
 }
@@ -152,12 +152,11 @@ func cfgsFromUrl (url string) (map[string]*ssrConfig, error) {
 }
 
 func checkCfg(master chan<- *ssrConfig, cfg *ssrConfig) {
-	if checkMethod == "http" {
+	if checkAllMethod == "http" {
 		cfg.httpPing()
 	} else {
 		cfg.tcpPing()
 	}
-	//cfg.tcpPing()
 	log(cfg.Remarks, cfg.Host, "ttl:", cfg.Ttl)
 	master <- cfg
 }

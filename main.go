@@ -11,6 +11,7 @@ import (
 const fn = "current_config.json"
 
 var checkMethod = "tcp"
+var checkAllMethod = "tcp"
 
 type SSRGateServer struct {
 	url          string
@@ -61,7 +62,7 @@ func (s *SSRGateServer) check() {
 	if s.config.Ttl <= 0 {
 		s.update()
 
-	} else {
+	} else if checkMethod == "http" {
 		ttl := HttpPing(s.port)
 		log(s.config.Remarks, "http ttl:", ttl)
 		if ttl < 0 {
@@ -99,7 +100,8 @@ func main() {
 	l := flag.Int("l", 1080, "listen port")
 	k := flag.String("k", "", "remarks match keywords")
 	b := flag.String("b", "", "remarks match bad keywords")
-	c := flag.String("c", "tcp", "check method: [tcp|http]")
+	c := flag.String("c", "tcp", "the method that check node: [tcp|http]")
+	m := flag.String("m", "tcp", "the method that check all nodes: [tcp|http]")
 
 	flag.Parse()
 	if *h || *u == "" {
@@ -113,6 +115,7 @@ func main() {
 		serv := newSSRGateServer(*u, *l, goodKeyWords, badKeyWords)
 
 		checkMethod = *c
+		checkAllMethod = *m
 		serv.Run()
 	}
 }
