@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -15,7 +14,8 @@ const fn = "current_config.json"
 var checkMethod = "tcp"
 var checkAllMethod = "tcp"
 
-var updateChan = make(chan bool)
+var ssrGateChan = make(chan string)
+var httpServChan = make(chan string)
 
 type SSRGateServer struct {
 	url          string
@@ -75,10 +75,14 @@ func (s *SSRGateServer) check() {
 	}
 }
 
-func (s *SSRGateServer) updateBySignal(ch <-chan bool) {
+func (s *SSRGateServer) handleChan() {
 	for {
-		<- ch
-		s.update()
+		str := <- ssrGateChan
+		if str == "update" {
+			s.update()
+		} else {
+			httpServChan <- s.config.Remarks
+		}
 	}
 }
 
@@ -99,16 +103,11 @@ func (s *SSRGateServer) Run() {
 		s.update()
 	}
 
-	go s.updateBySignal(updateChan)
+	go s.handleChan()
 	for {
 		time.Sleep(time.Second * 20)
 		s.check()
 	}
-}
-
-func httpHandle(w http.ResponseWriter, _ *http.Request) {
-	updateChan <- true
-	fmt.Fprintf(w, "SSR GATE UPDATE")
 }
 
 func main() {
@@ -134,7 +133,8 @@ func main() {
 		checkMethod = *c
 		checkAllMethod = *m
 
-		http.HandleFunc("/", httpHandle)
+		http.HandleFunc("/", httpIndex)
+		http.HandleFunc("/update", httpUdpate)
 		go http.ListenAndServe(":8094", nil)
 
 		serv.Run()
