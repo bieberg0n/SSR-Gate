@@ -50,7 +50,7 @@ func httpPingOnce(socksPort int) (int, error) {
 		Transport: httpTransport,
 		Timeout:   3 * time.Second,
 	}
-	resp, err := httpClient.Get("https://www.google.com/")
+	resp, err := httpClient.Head("https://www.google.com/")
 	ttl := time.Now().Sub(oldTime).Seconds()
 	if err != nil {
 		log("http get error:", err)

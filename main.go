@@ -112,16 +112,27 @@ func (s *SSRGateServer) Run() {
 
 func main() {
 	h := flag.Bool("h", false, "help")
-	u := flag.String("u", "", "ssr url")
+	u := flag.String("u", "", "ssr sub url")
 	l := flag.Int("l", 1080, "listen port")
 	k := flag.String("k", "", "remarks match keywords")
 	b := flag.String("b", "", "remarks match bad keywords")
 	c := flag.String("c", "tcp", "the method that check node: [tcp|http]")
 	m := flag.String("m", "tcp", "the method that check all nodes: [tcp|http]")
+	s := flag.String("s", "", "use single ssr url")
 
 	flag.Parse()
-	if *h || *u == "" {
+	if *h || *u == "" && *s == "" {
 		flag.Usage()
+
+	} else if *s != "" {
+		cfg, err := parseSSRUrl(*s)
+		check(err)
+
+		log(cfg.Remarks, cfg.Host)
+
+		client := new(SSRClient)
+		client.Start(cfg, *l)
+
 	} else {
 		goodKeyWords := strings.Split(*k, " ")
 		badKeyWords := strings.Split(*b, " ")
