@@ -28,14 +28,14 @@ type SSRGateServer struct {
 	port         int
 }
 
-func newSSRGateServer(ssrUrl string, port int, goodKeyWords []string, badKeyWords []string) *SSRGateServer {
+func newSSRGateServer(ssrUrl string, ip string, port int, goodKeyWords []string, badKeyWords []string) *SSRGateServer {
 	serv := new(SSRGateServer)
 	serv.url = ssrUrl
 	serv.configChan = make(chan *ssrConfig)
 	serv.goodKeyWords = goodKeyWords
 	serv.badKeyWords = badKeyWords
 	serv.port = port
-	go runSSR(serv.configChan, port)
+	go runSSR(serv.configChan, ip, port)
 
 	return serv
 }
@@ -113,7 +113,8 @@ func (s *SSRGateServer) Run() {
 func main() {
 	h := flag.Bool("h", false, "help")
 	u := flag.String("u", "", "ssr sub url")
-	l := flag.Int("l", 1080, "listen port")
+	i := flag.String("a", "127.0.0.1", "ssr listen ip")
+	l := flag.Int("l", 1080, "ssr listen port")
 	k := flag.String("k", "", "remarks match keywords")
 	b := flag.String("b", "", "remarks match bad keywords")
 	c := flag.String("c", "tcp", "the method that check node: [tcp|http]")
@@ -131,7 +132,7 @@ func main() {
 		log(cfg.Remarks, cfg.Host)
 
 		client := new(SSRClient)
-		client.Start(cfg, *l)
+		client.Start(cfg, *i, *l)
 
 	} else {
 		goodKeyWords := strings.Split(*k, " ")
@@ -139,7 +140,7 @@ func main() {
 
 		log("good key words:", goodKeyWords)
 		log("bad key words:", badKeyWords)
-		serv := newSSRGateServer(*u, *l, goodKeyWords, badKeyWords)
+		serv := newSSRGateServer(*u, *i, *l, goodKeyWords, badKeyWords)
 
 		checkMethod = *c
 		checkAllMethod = *m

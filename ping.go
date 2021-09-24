@@ -83,7 +83,7 @@ func runAndHttpPing (cfg *ssrConfig) int {
 	ch := make(chan *ssrConfig)
 	port := int(RandInt64(30000, 60000))
 	log("check:", cfg.Remarks, port)
-	go runSSR(ch, port)
+	go runSSR(ch, "127.0.0.1", port)
 	ch <- cfg
 	time.Sleep(500 * time.Millisecond)
 	ttl := HttpPing(port)

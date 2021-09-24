@@ -14,7 +14,7 @@ type SSRClient struct {
 	cmd *exec.Cmd
 }
 
-func (c *SSRClient) Start(cfg *ssrConfig, listenPort int) {
+func (c *SSRClient) Start(cfg *ssrConfig, listen string, listenPort int) {
 	cmd := exec.Command(
 		"python3", "shadowsocksr/shadowsocks/local.py",
 		"-s", cfg.Host,
@@ -25,6 +25,7 @@ func (c *SSRClient) Start(cfg *ssrConfig, listenPort int) {
 		"-o", cfg.Obfs,
 		"-G", cfg.ProtoParam,
 		"-g", cfg.ObfsParam,
+		"-b", listen,
 		"-l", strconv.Itoa(listenPort),
 		//"-v",
 	)
@@ -58,11 +59,11 @@ func (c *SSRClient) Stop () {
 	check(err)
 }
 
-func runSSR(cfgChan chan *ssrConfig, listenPort int) {
+func runSSR(cfgChan chan *ssrConfig, listen string, listenPort int) {
 	cfg := <-cfgChan
 	for {
 		client := new(SSRClient)
-		go client.Start(cfg, listenPort)
+		go client.Start(cfg, listen, listenPort)
 		cfg = <-cfgChan
 		log("stop...")
 		client.Stop()

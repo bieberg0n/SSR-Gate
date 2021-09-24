@@ -47,7 +47,7 @@ func (s ssrConfigSlice) Swap(i, j int) {
 	s[i], s[j] = s[j], s[i]
 }
 
-func parseSSRUrl (url string) (*ssrConfig, error) {
+func parseSSRUrl(url string) (*ssrConfig, error) {
 	url, err := b64decode(url[6:])
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func parseSSRUrl (url string) (*ssrConfig, error) {
 	return ssrConfig, nil
 }
 
-func readSSR (data string) (map[string]*ssrConfig, error) {
+func readSSR(data string) (map[string]*ssrConfig, error) {
 	ssrs := strFilter(strings.Split(data, "\n"), func(s string) bool {
 		return s != ""
 	})
@@ -130,7 +130,7 @@ func readSSR (data string) (map[string]*ssrConfig, error) {
 	return cfgs, nil
 }
 
-func cfgsFromUrl (url string) (map[string]*ssrConfig, error) {
+func cfgsFromUrl(url string) (map[string]*ssrConfig, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -182,8 +182,8 @@ func goodWaysByCfgs(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWor
 	}
 
 	for i := 0; i < childNum; i++ {
-	//for _, cfg := range cfgs {
-		cfg := <- self
+		//for _, cfg := range cfgs {
+		cfg := <-self
 		if cfg.Ttl > 0 {
 			goodCfgs = append(goodCfgs, cfg)
 		}
@@ -209,6 +209,7 @@ func goodWaysFromUrl(url string, goodKeyWords []string, badKeyWords []string) ss
 		}
 	}
 
+	log("SSR config length:", len(cfgMap))
 	for {
 		cfgs := goodWaysByCfgs(cfgMap, goodKeyWords, badKeyWords)
 		if len(cfgs) == 0 {
