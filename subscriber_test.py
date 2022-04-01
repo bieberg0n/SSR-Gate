@@ -1,6 +1,6 @@
 import pytest
 from ssr import SSRParam
-from subscriber import ssr_param_from_subscribe_url, ssr_param_from_ssr_url
+from subscriber import ssr_params_from_subscription_url, ssr_param_from_ssr_url
 
 
 def test_ssr_param_from_subscribe_url():

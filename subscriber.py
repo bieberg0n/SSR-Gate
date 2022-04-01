@@ -25,10 +25,6 @@ def ssr_param_from_ssr_url(ssr_url):
         method=left_parts[3],
         obfs=left_parts[4],
         password=b64decode(left_parts[5]),
-        obfs_param='',
-        proto_param='',
-        listen='',
-        listen_port=0,
     )
 
     for key, values in right_parts.items():
@@ -49,7 +45,7 @@ def ssr_param_from_ssr_url(ssr_url):
     return ssr_param
 
 
-def ssr_param_from_subscribe_url(url):
+def ssr_params_from_subscription_url(url):
     r = requests.get(url)
     data = r.text
     ssr_urls = b64decode(data).split('\n')
