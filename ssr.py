@@ -1,38 +1,31 @@
-from dataclasses import dataclass
 import subprocess
-from utils import log
+import otp
+from otp import log
+from config import Config
+from ssrparam import SSRParam
 
 
-@dataclass
-class SSRParam:
-    host: str
-    port: int
-    password: str
-    method: str
-    protocol: str
-    obfs: str
-    remarks: str = ''
-    group: str = ''
-    listen: str = '127.0.0.1'
-    listen_port: int = 1080
-    obfs_param: str = ''
-    proto_param: str = ''
-    udp_port: int = 0
-    uot: bool = False
-    ttl: int = 0
+class SSRMethod:
+    param = 'param'
+    set_param = 'set-param'
 
 
-class SSR:
+class SSR(otp.Service):
     p: subprocess.Popen
     ssr_param: SSRParam
+    name: str = 'ssr'
+    methods = SSRMethod
 
-    def __init__(self, ssr_supervisor):
+    def __init__(self):
+        super(SSR, self).__init__()
         self.p = subprocess.Popen(['echo', '-n'])
-        self.ssr_supervisor = ssr_supervisor
-        self.ssr_param = None
 
-    def start(self):
-        c = self.ssr_param
+        methods = SSR.methods
+        self.bind(methods.param)
+        self.handle_map[methods.set_param] = self.set_param
+
+    def start_ssr(self):
+        c = self.states.get('param')
         log(c)
         self.p = subprocess.Popen(['python3', 'shadowsocksr/shadowsocks/local.py',
                                    '-s', c.host,
@@ -47,15 +40,11 @@ class SSR:
                                    '-l', str(c.listen_port),
                                    ])
 
-    def run(self):
-        if self.ssr_param:
-            self.start()
-
-    def load(self, ssr_param: SSRParam):
-        self.ssr_param = ssr_param
-        self.ssr_param.listen = self.ssr_supervisor.listen
-        self.ssr_param.listen_port = self.ssr_supervisor.listen_port
+    def set_param(self, ssr_param: SSRParam):
+        ssr_param.listen = Config.get(Config.methods.listen_host)
+        ssr_param.listen_port = Config.get(Config.methods.listen_port)
+        self.states['param'] = ssr_param
         if not self.p.poll():
             self.p.terminate()
             self.p.wait()
-        self.run()
+        self.start_ssr()

@@ -3,14 +3,32 @@ import time
 import socket
 from queue import Queue
 import requests
+
+import otp
+from otp import log, spawn
+import subscriber
 from ssr import SSR, SSRParam
-from utils import log, spawn
+from config import Config
 
 
-class Checker:
-    def __init__(self, ssr_supervisor):
-        self.ssr_supervisor = ssr_supervisor
+class CheckerMethod:
+    check = 'check'
+    next = 'next'
+    reload = 'reload'
+
+
+class Checker(otp.Service):
+    name: str = 'checker'
+    methods = CheckerMethod
+
+    def __init__(self):
+        super(Checker, self).__init__()
         self.ssr_params_standby = Queue()
+
+        methods = Checker.methods
+        self.handle_map[methods.check] = self.check
+        self.handle_map[methods.next] = self.push_ssr_param
+        self.handle_map[methods.reload] = self.reload
 
     def reload(self):
         self.ssr_params_standby = Queue()
@@ -30,11 +48,11 @@ class Checker:
         return ttl
 
     def ping(self, ssr_param: SSRParam):
-        keyword = self.ssr_supervisor.keyword
-        if keyword not in ssr_param.remarks:
+        keyword = Config.get(Config.methods.keyword)
+        if keyword and keyword not in ssr_param.remarks:
             log(ssr_param.remarks, 'BAN')
             ssr_param.ttl = -1
-            
+
         else:
             addr = (ssr_param.host, ssr_param.port)
             ttls = [self.ping_once(addr) for _ in range(3)]
@@ -42,13 +60,14 @@ class Checker:
             ssr_param.ttl = min_ttl
             log(ssr_param.remarks, 'TCP TTL:', ssr_param.ttl)
 
-    def ping_all(self):
-        for ssr_param in self.ssr_supervisor.ssr_params:
+    def ping_all(self, ssr_params):
+        for ssr_param in ssr_params:
             self.ping(ssr_param)
+        return ssr_params
     
     def http_ping_once(self):
         old_time = time.time() * 1000
-        listen_port = self.ssr_supervisor.listen_port
+        listen_port = Config.get(Config.methods.listen_port)
         try:
             r = requests.head('http://google.com',
                               proxies=dict(http=f'socks5h://127.0.0.1:{listen_port}',
@@ -72,20 +91,24 @@ class Checker:
     
     def push_ssr_param(self):
         if self.ssr_params_standby.empty():
-            self.ping_all()
-            ssr_params = sorted(self.ssr_supervisor.ssr_params, key=lambda p: p.ttl)
+            url = Config.get(Config.methods.subscription_url)
+            ssr_params = subscriber.ssr_params_from_subscription_url(url)
+            ssr_params = self.ping_all(ssr_params)
+            ssr_params = sorted(ssr_params, key=lambda p: p.ttl)
+            Config.emit(Config.methods.set_ssr_params, ssr_params)
+
             for ssr_param in ssr_params:
                 if ssr_param.ttl != -1:
                     self.ssr_params_standby.put(ssr_param)
 
         ssr_param = self.ssr_params_standby.get()
-        self.ssr_supervisor.ssr.load(ssr_param)
+        SSR.emit(SSR.methods.set_param, ssr_param)
         log('use:', ssr_param.remarks)
         time.sleep(1)
-        self.check()
+        Checker.emit(Checker.methods.check)
 
     def check(self):
-        current_ssr_param = self.ssr_supervisor.ssr.ssr_param
+        current_ssr_param = SSR.get(SSR.methods.param)
         if current_ssr_param:
             self.ping(current_ssr_param)
             if current_ssr_param.ttl == -1 or not self.http_ping():
@@ -95,8 +118,9 @@ class Checker:
     
     def check_loop(self):
         while True:
-            self.check()
+            Checker.emit(Checker.methods.check)
             time.sleep(20)
 
     def run(self):
         spawn(target=self.check_loop)
+        super(Checker, self).run()

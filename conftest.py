@@ -1,5 +1,5 @@
 import pytest
-import ssrsupervisor
+import app
 
 
 @pytest.fixture
