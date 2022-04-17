@@ -8,6 +8,7 @@ from ssrparam import SSRParam
 class SSRMethod:
     param = 'param'
     set_param = 'set-param'
+    restart = 'restart'
 
 
 class SSR(otp.Service):
@@ -23,9 +24,12 @@ class SSR(otp.Service):
         methods = SSR.methods
         self.bind(methods.param)
         self.handle_map[methods.set_param] = self.set_param
+        self.handle_map[methods.restart] = self.restart
 
     def start_ssr(self):
         c = self.states.get('param')
+        c.listen = Config.get(Config.methods.listen_host)
+        c.listen_port = Config.get(Config.methods.listen_port)
         log(c)
         self.p = subprocess.Popen(['python3', 'shadowsocksr/shadowsocks/local.py',
                                    '-s', c.host,
@@ -40,11 +44,12 @@ class SSR(otp.Service):
                                    '-l', str(c.listen_port),
                                    ])
 
-    def set_param(self, ssr_param: SSRParam):
-        ssr_param.listen = Config.get(Config.methods.listen_host)
-        ssr_param.listen_port = Config.get(Config.methods.listen_port)
-        self.states['param'] = ssr_param
+    def restart(self):
         if not self.p.poll():
             self.p.terminate()
             self.p.wait()
         self.start_ssr()
+
+    def set_param(self, ssr_param: SSRParam):
+        self.states['param'] = ssr_param
+        self.restart()

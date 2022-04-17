@@ -29,7 +29,7 @@ class Service:
         self.handle_map[state] = lambda q: q.put(self.states.get(state))
         def set(args):
             self.states[state] = args
-        self.handle_map['set-' + state] = set
+        self.handle_map['set_' + state] = set
 
     @classmethod
     def get(cls, method: str):

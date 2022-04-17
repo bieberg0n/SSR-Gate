@@ -17,6 +17,8 @@ class ConfigMethod:
     set_ssr_params = 'set_ssr_params'
     keyword = 'keyword'
     set_keyword = 'set_keyword'
+    auto_mode = 'auto_mode'
+    set_auto_mode = 'set_auto_mode'
 
 
 class Config(otp.Service):
@@ -33,6 +35,7 @@ class Config(otp.Service):
         self.bind(methods.subscription_url)
         self.bind(methods.ssr_params)
         self.bind(methods.keyword)
+        self.bind(methods.auto_mode)
         self.handle_map = {
             **self.handle_map,
             methods.set_listen_host: self.set_listen_host,
@@ -52,9 +55,10 @@ class Config(otp.Service):
             config = pickle.load(f)
         self.states['subscription_url'] = config.get('subscription_url') or ''
         self.states['ssr_params'] = config.get('ssr_params') or ''
-        self.states['listen_host'] = config.get('listen_host') or ''
+        self.states['listen_host'] = config.get('listen_host') or '127.0.0.1'
         self.states['listen_port'] = config.get('listen_port') or 1080
-        self.states['keyword'] = config.get('keyword') or ''
+        self.states['keyword'] = config.get('keyword') or '香港'
+        self.states['auto_mode'] = config.get('auto_mode') or True
 
     def save_config_file(self):
         with open(Config.filename, 'wb') as f:

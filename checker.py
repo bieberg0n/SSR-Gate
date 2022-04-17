@@ -49,7 +49,8 @@ class Checker(otp.Service):
 
     def ping(self, ssr_param: SSRParam):
         keyword = Config.get(Config.methods.keyword)
-        if keyword and keyword not in ssr_param.remarks:
+        auto_mode_flag = Config.get(Config.methods.auto_mode)
+        if auto_mode_flag and keyword and keyword not in ssr_param.remarks:
             log(ssr_param.remarks, 'BAN')
             ssr_param.ttl = -1
 
@@ -67,11 +68,12 @@ class Checker(otp.Service):
     
     def http_ping_once(self):
         old_time = time.time() * 1000
+        listen_host = Config.get(Config.methods.listen_host)
         listen_port = Config.get(Config.methods.listen_port)
         try:
             r = requests.head('http://google.com',
-                              proxies=dict(http=f'socks5h://127.0.0.1:{listen_port}',
-                                           https=f'socks5h://127.0.0.1:{listen_port}'),
+                              proxies=dict(http=f'socks5h://{listen_host}:{listen_port}',
+                                           https=f'socks5h://{listen_host}:{listen_port}'),
                               timeout=3)
         except Exception as e:
             log(e)
@@ -88,9 +90,13 @@ class Checker(otp.Service):
                 return True
         else:
             return False
-    
+
     def push_ssr_param(self):
-        if self.ssr_params_standby.empty():
+        is_auto_mode = Config.get(Config.methods.auto_mode)
+        if not is_auto_mode:
+            return
+
+        elif self.ssr_params_standby.empty():
             url = Config.get(Config.methods.subscription_url)
             ssr_params = subscriber.ssr_params_from_subscription_url(url)
             ssr_params = self.ping_all(ssr_params)
@@ -103,7 +109,6 @@ class Checker(otp.Service):
 
         ssr_param = self.ssr_params_standby.get()
         SSR.emit(SSR.methods.set_param, ssr_param)
-        log('use:', ssr_param.remarks)
         time.sleep(1)
         Checker.emit(Checker.methods.check)
 
