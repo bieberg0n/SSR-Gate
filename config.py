@@ -50,15 +50,22 @@ class Config(otp.Service):
 
     def read_config_file(self):
         if not os.path.exists(Config.filename):
+            self.states['subscription_url'] = ''
+            self.states['ssr_params'] = []
+            self.states['listen_host'] = '127.0.0.1'
+            self.states['listen_port'] = 1080
+            self.states['keyword'] = '香港'
+            self.states['auto_mode'] = True
             return
+
         with open(Config.filename, 'rb') as f:
             config = pickle.load(f)
-        self.states['subscription_url'] = config.get('subscription_url') or ''
-        self.states['ssr_params'] = config.get('ssr_params') or ''
-        self.states['listen_host'] = config.get('listen_host') or '127.0.0.1'
-        self.states['listen_port'] = config.get('listen_port') or 1080
-        self.states['keyword'] = config.get('keyword') or '香港'
-        self.states['auto_mode'] = config.get('auto_mode') or True
+        self.states['subscription_url'] = config.get('subscription_url')
+        self.states['ssr_params'] = config.get('ssr_params')
+        self.states['listen_host'] = config.get('listen_host')
+        self.states['listen_port'] = config.get('listen_port')
+        self.states['keyword'] = config.get('keyword')
+        self.states['auto_mode'] = config.get('auto_mode')
 
     def save_config_file(self):
         with open(Config.filename, 'wb') as f:

@@ -98,6 +98,9 @@ class Checker(otp.Service):
 
         elif self.ssr_params_standby.empty():
             url = Config.get(Config.methods.subscription_url)
+            if not url:
+                return
+
             ssr_params = subscriber.ssr_params_from_subscription_url(url)
             ssr_params = self.ping_all(ssr_params)
             ssr_params = sorted(ssr_params, key=lambda p: p.ttl)

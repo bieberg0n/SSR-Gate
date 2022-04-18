@@ -1,4 +1,6 @@
 flask
+flask_cors
 requests
 requests[socks]
+pywin32
 pytest

@@ -78,7 +78,9 @@ export default {
 
       this.params = [...goodParams, ...banParams]
       let paramRemarks = this.params.map(p => p.remarks)
-      this.radio = paramRemarks.indexOf(currentParam.remarks)
+      if (paramRemarks.length > 0) {
+        this.radio = paramRemarks.indexOf(currentParam.remarks)
+      }
       this.listenHost = listenHost
       this.listenPort = listenPort
       this.subscriptionUrl = subscriptionUrl

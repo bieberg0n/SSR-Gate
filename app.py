@@ -45,6 +45,7 @@ class WebServer(otp.Service):
         Config.emit(Config.methods.set_subscription_url, url)
         Config.emit(Config.methods.set_keyword, keyword)
         SSR.emit(SSR.methods.restart)
+        Checker.emit(Checker.methods.check)
         return jsonify(request.json)
 
     def next(self):

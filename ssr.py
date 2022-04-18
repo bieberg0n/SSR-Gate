@@ -19,7 +19,7 @@ class SSR(otp.Service):
 
     def __init__(self):
         super(SSR, self).__init__()
-        self.p = subprocess.Popen(['echo', '-n'])
+        self.p = subprocess.Popen(['python', '--version'])
 
         methods = SSR.methods
         self.bind(methods.param)
@@ -28,10 +28,13 @@ class SSR(otp.Service):
 
     def start_ssr(self):
         c = self.states.get('param')
+        if not c:
+            return
+
         c.listen = Config.get(Config.methods.listen_host)
         c.listen_port = Config.get(Config.methods.listen_port)
         log(c)
-        self.p = subprocess.Popen(['python3', 'shadowsocksr/shadowsocks/local.py',
+        self.p = subprocess.Popen(['python', 'shadowsocksr/shadowsocks/local.py',
                                    '-s', c.host,
                                    '-p', str(c.port),
                                    '-k', c.password,
