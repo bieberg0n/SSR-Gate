@@ -171,6 +171,9 @@ func goodWaysByCfgs(cfgs map[string]*ssrConfig, goodKeyWords []string, badKeyWor
 	}
 
 	for _, cfg := range cfgs {
+		if (cfg.Method == "rc4-md5") {
+			continue
+		}
 		if (len(badKeyWords) != 0 && anyStrsInStr(cfg.Remarks, badKeyWords)) ||
 			(len(goodKeyWords) != 0 && !allStrsInStr(cfg.Remarks, goodKeyWords)) {
 			log(cfg.Host, cfg.Remarks, "BAN")
