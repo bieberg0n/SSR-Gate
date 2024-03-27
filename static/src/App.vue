@@ -6,6 +6,7 @@
       <div>订阅链接: {{ subscriptionUrl }}</div>
       <div>节点过滤: {{ keyword }}</div>
       <Button @click="enableEditMode">修改</Button>
+      <Button @click="updateSub">更新节点</Button>
     </div>
     <div v-else>
       <Input v-model="form.host" />
@@ -74,7 +75,7 @@ export default {
       } = r.data
       let goodParams = params.filter(p => p.ttl > 0)
       goodParams.sort((a, b) => a.ttl - b.ttl)
-      let banParams = params.filter(p => p.ttl === -1)
+      let banParams = params.filter(p => p.ttl < 1)
 
       this.params = [...goodParams, ...banParams]
       let paramRemarks = this.params.map(p => p.remarks)
@@ -96,10 +97,13 @@ export default {
       this.editMode = true
     },
 
+    async updateSub() {
+      await axios.get('api/subscription/update')
+      setTimeout(this.updateStatus, 1000)
+    },
+
     async updateConfig() {
       await axios.post('api/config', this.form)
-      this.editMode = false
-      setTimeout(this.updateStatus, 1000)
     },
 
     async next() {

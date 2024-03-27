@@ -46,6 +46,7 @@ class Service:
             (method, *args) = self.queue.get()
             handle = self.handle_map.get(method)
             if handle:
+                log(f'[{self.name}] handle method: {method}')
                 handle(*args)
             else:
                 log(f'[{self.name}] unknown method: {method}')

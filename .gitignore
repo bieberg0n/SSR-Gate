@@ -60,3 +60,5 @@ target/
 
 .idea/
 config.dat
+SSR-Gate
+current_config.json

@@ -30,6 +30,10 @@ class Checker(otp.Service):
         self.handle_map[methods.next] = self.push_ssr_param
         self.handle_map[methods.reload] = self.reload
 
+        current_ssr_param = Config.get(Config.methods.current_ssr_param)
+        if current_ssr_param:
+            SSR.emit(SSR.methods.set_param, current_ssr_param)
+
     def reload(self):
         self.ssr_params_standby = Queue()
         self.push_ssr_param()
@@ -91,6 +95,7 @@ class Checker(otp.Service):
         else:
             return False
 
+
     def push_ssr_param(self):
         is_auto_mode = Config.get(Config.methods.auto_mode)
         if not is_auto_mode:
@@ -130,5 +135,5 @@ class Checker(otp.Service):
             time.sleep(20)
 
     def run(self):
-        spawn(target=self.check_loop)
+        # spawn(target=self.check_loop)
         super(Checker, self).run()

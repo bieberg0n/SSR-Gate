@@ -61,6 +61,10 @@ class WebServer(otp.Service):
         Checker.emit(Checker.methods.reload)
         return jsonify(dict(url=url))
 
+    def update_subscription(self):
+        Config.emit(Config.methods.update_subscription)
+        return ''
+
     def post_mode(self):
         mode = request.json.get('mode')
         auto_mode_flag = mode == 'auto'
@@ -73,6 +77,7 @@ class WebServer(otp.Service):
             if ssr_params:
                 p = ssr_params[0]
                 SSR.emit(SSR.methods.set_param, p)
+                Config.emit(Config.methods.set_current_ssr_param, p)
 
         return jsonify(request.json)
 
@@ -84,6 +89,7 @@ class WebServer(otp.Service):
         self.app.add_url_rule('/api/config', methods=['POST'], view_func=self.update_config)
         self.app.add_url_rule('/api/next', methods=['POST'], view_func=self.next)
         self.app.add_url_rule('/api/mode', methods=['POST'], view_func=self.post_mode)
+        self.app.add_url_rule('/api/subscription/update', methods=['GET'], view_func=self.update_subscription)
         self.app.add_url_rule('/api/subscription', methods=['POST'], view_func=self.post_subscription)
         self.app.add_url_rule('/api/simulator', methods=['GET'], view_func=self.simulator)
 

@@ -1,7 +1,7 @@
 from urllib.parse import parse_qs
 from pprint import pprint as log
 import requests
-from ssr import SSRParam
+from ssrparam import SSRParam
 from utils import b64decode
 
 
